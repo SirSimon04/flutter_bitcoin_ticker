@@ -3,7 +3,6 @@ import 'package:flutter/widgets.dart';
 import 'coin_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
-import 'coin_data.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -26,10 +25,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
-          btcValue = '?';
-          ethValue = '?';
-          ltcValue = '?';
-          updateUI(selectedCurrency);
+          updateUI();
         });
       },
     );
@@ -55,42 +51,35 @@ class _PriceScreenState extends State<PriceScreen> {
       backgroundColor: Colors.lightBlue,
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
-        print(selectedIndex);
         selectedCurrency = currenciesList[selectedIndex];
-        btcValue = '?';
-        ethValue = '?';
-        ltcValue = '?';
-        updateUI(selectedCurrency);
+        updateUI();
       },
       children: dropDownItems,
     );
   }
 
-  String btcValue = '?';
-  String ethValue = '?';
-  String ltcValue = '?';
+  Map<String, String> coinValues = {};
 
-  Future<void> updateUI(String currency) async {
-    var data1 = await CoinData().getCoinData('BTC', currency);
-    double recievedData1 = data1['rate'];
+  bool isWaiting = false;
 
-    var data2 = await CoinData().getCoinData('ETH', currency);
-    double recievedData2 = data2['rate'];
-
-    var data3 = await CoinData().getCoinData('LTC', currency);
-    double recievedData3 = data3['rate'];
-    setState(() {
-      btcValue = recievedData1.toStringAsFixed(2);
-      ethValue = recievedData2.toStringAsFixed(2);
-      ltcValue = recievedData3.toStringAsFixed(2);
-    });
+  void updateUI() async {
+    isWaiting = true;
+    try {
+      var data = await CoinData().getCoinData(selectedCurrency);
+      isWaiting = false;
+      setState(() {
+        coinValues = data;
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    updateUI(selectedCurrency);
+    updateUI();
   }
 
   @override
@@ -107,17 +96,17 @@ class _PriceScreenState extends State<PriceScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 CurrencyTile(
-                  currencyValue: btcValue,
+                  currencyValue: isWaiting ? '?' : coinValues['BTC'],
                   selectedCurrency: selectedCurrency,
                   selectedCrypto: 'BTC',
                 ),
                 CurrencyTile(
-                  currencyValue: ethValue,
+                  currencyValue: isWaiting ? '?' : coinValues['ETH'],
                   selectedCurrency: selectedCurrency,
                   selectedCrypto: 'ETH',
                 ),
                 CurrencyTile(
-                  currencyValue: ltcValue,
+                  currencyValue: isWaiting ? '?' : coinValues['LTC'],
                   selectedCurrency: selectedCurrency,
                   selectedCrypto: 'LTC',
                 ),
